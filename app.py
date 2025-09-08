@@ -160,7 +160,6 @@ def dashboard():
         .quick-tag:hover {
             background: #1e40af;
             color: white;
-            transform: translateY(-2px);
         }
         .search-btn {
             background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
@@ -174,7 +173,6 @@ def dashboard():
             transition: all 0.2s;
         }
         .search-btn:hover {
-            transform: translateY(-2px);
             box-shadow: 0 10px 20px rgba(30, 64, 175, 0.3);
         }
         .results {
@@ -272,6 +270,7 @@ def dashboard():
             <div class="quick-tags">
                 <button class="quick-tag" onclick="quickSearch('svapna')">svapna</button>
                 <button class="quick-tag" onclick="quickSearch('svapnasvapna')">svapnasvapna</button>
+                <button class="quick-tag" onclick="quickSearch('svapnayoga')">svapnayoga</button>
                 <button class="quick-tag" onclick="quickSearch('svapnajāgrat')">svapnajāgrat</button>
                 <button class="quick-tag" onclick="quickSearch('svapnalabdha')">svapnalabdha</button>
                 <button class="quick-tag" onclick="quickSearch('nidrā')">nidrā</button>
