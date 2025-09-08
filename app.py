@@ -240,15 +240,6 @@ def dashboard():
             color: #1e40af;
             font-weight: 600;
         }
-        .advantage {
-            background: rgba(16, 185, 129, 0.1);
-            color: #059669;
-            padding: 15px 20px;
-            border-radius: 10px;
-            margin-top: 20px;
-            text-align: center;
-            font-weight: 600;
-        }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
@@ -281,18 +272,13 @@ def dashboard():
             <div class="quick-tags">
                 <button class="quick-tag" onclick="quickSearch('svapna')">svapna</button>
                 <button class="quick-tag" onclick="quickSearch('svapnasvapna')">svapnasvapna</button>
-                <button class="quick-tag" onclick="quickSearch('yoga')">yoga</button>
-                <button class="quick-tag" onclick="quickSearch('tantra')">tantra</button>
-                <button class="quick-tag" onclick="quickSearch('mantra')">mantra</button>
-                <button class="quick-tag" onclick="quickSearch('upaniṣad')">upaniṣad</button>
-                <button class="quick-tag" onclick="quickSearch('kāśmīra')">kāśmīra</button>
+                <button class="quick-tag" onclick="quickSearch('svapnajāgrat')">svapnajāgrat</button>
+                <button class="quick-tag" onclick="quickSearch('svapnalabdha')">svapnalabdha</button>
+                <button class="quick-tag" onclick="quickSearch('nidrā')">nidrā</button>
+                <button class="quick-tag" onclick="quickSearch('suṣupti')">suṣupti</button>
             </div>
             
             <button class="search-btn" onclick="performSearch()">Search Full Database</button>
-        </div>
-
-        <div class="advantage">
-            🚀 Railway Deployment: Complete 149MB database with zero content truncation!
         </div>
 
         <div class="results" id="results">
@@ -365,7 +351,7 @@ def dashboard():
 
             let html = `
                 <div class="search-info">
-                    Found ${results.length} texts containing "${searchTerm}" • ${totalMatches} total occurrences
+                    Found ${results.length} text${results.length !== 1 ? 's' : ''} containing "${searchTerm}" • ${totalMatches} occurrence${totalMatches !== 1 ? 's' : ''}
                 </div>
             `;
 
