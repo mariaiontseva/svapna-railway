@@ -10,14 +10,55 @@ import sqlite3
 import json
 import os
 import time
+import urllib.request
+import sys
 
 app = Flask(__name__)
 CORS(app)
 
-# Database path
+# Database configuration
 DATABASE_PATH = '/app/muktabodha_texts.db'  # Railway path
-if not os.path.exists(DATABASE_PATH):
-    DATABASE_PATH = '/Users/mariaiontseva/muktabodha_texts.db'  # Local fallback
+DATABASE_URL = 'https://github.com/mariaiontseva/svapna-railway/releases/download/v1.0/muktabodha_texts.db'
+
+def ensure_database():
+    """Ensure database exists, download if needed"""
+    global DATABASE_PATH
+    
+    # Check Railway path first
+    if os.path.exists(DATABASE_PATH):
+        print(f"✓ Database found at {DATABASE_PATH}")
+        return
+    
+    # Try local fallback
+    local_path = '/Users/mariaiontseva/muktabodha_texts.db'
+    if os.path.exists(local_path):
+        DATABASE_PATH = local_path
+        print(f"✓ Using local database at {DATABASE_PATH}")
+        return
+    
+    # Download from GitHub Release
+    print(f"📥 Downloading database from GitHub Release...")
+    print(f"   URL: {DATABASE_URL}")
+    print(f"   Target: {DATABASE_PATH}")
+    
+    try:
+        def download_progress(block_num, block_size, total_size):
+            downloaded = block_num * block_size
+            percent = min(downloaded * 100.0 / total_size, 100)
+            sys.stdout.write(f'\r   Progress: {percent:.1f}%')
+            sys.stdout.flush()
+        
+        urllib.request.urlretrieve(DATABASE_URL, DATABASE_PATH, download_progress)
+        print(f"\n✓ Database downloaded successfully!")
+        print(f"   Size: {os.path.getsize(DATABASE_PATH) / (1024*1024):.1f} MB")
+        
+    except Exception as e:
+        print(f"\n❌ Error downloading database: {e}")
+        print("   Falling back to demo mode...")
+        DATABASE_PATH = None
+
+# Initialize database on startup
+ensure_database()
 
 @app.route('/')
 def dashboard():
@@ -373,6 +414,9 @@ def search_api():
         if not search_term:
             return jsonify({'error': 'Search term required'}), 400
         
+        if DATABASE_PATH is None:
+            return jsonify({'error': 'Database not available. Please wait for download to complete.'}), 503
+        
         # Connect to database
         conn = sqlite3.connect(DATABASE_PATH)
         conn.row_factory = sqlite3.Row
@@ -452,7 +496,8 @@ def health():
     """Health check endpoint"""
     return jsonify({
         'status': 'healthy',
-        'database': 'connected' if os.path.exists(DATABASE_PATH) else 'missing',
+        'database': 'connected' if DATABASE_PATH and os.path.exists(DATABASE_PATH) else 'missing',
+        'database_path': DATABASE_PATH,
         'type': 'FULL_DATABASE_149MB'
     })
 
