@@ -378,31 +378,21 @@ def search_api():
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         
-        # Use FTS for search
+        # Direct search in search_index (bypass FTS issues)
         cursor.execute("""
-            SELECT t.display_name, t.tradition, t.author, t.period,
-                   snippet(texts_fts, -1, '<mark>', '</mark>', '...', 30) as snippet,
-                   rank
-            FROM texts_fts 
-            JOIN texts t ON texts_fts.filename = t.filename
-            WHERE texts_fts MATCH ?
-            ORDER BY rank
+            SELECT t.display_name, t.tradition, t.author, t.period, si.content
+            FROM search_index si 
+            JOIN texts t ON si.rowid = t.rowid
+            WHERE LOWER(si.content) LIKE ?
+            ORDER BY t.display_name
             LIMIT 100
-        """, (search_term,))
+        """, (f'%{search_term}%',))
         
         results = []
         total_matches = 0
         
         for row in cursor.fetchall():
-            # Get full content for more snippets
-            cursor.execute("""
-                SELECT si.content FROM search_index si 
-                JOIN texts t2 ON si.rowid = t2.rowid 
-                WHERE t2.display_name = ?
-            """, (row['display_name'],))
-            
-            content_row = cursor.fetchone()
-            content = content_row['content'] if content_row else ""
+            content = row['content'] if row['content'] else ""
             
             # Count occurrences
             count = content.lower().count(search_term)
