@@ -426,7 +426,7 @@ def search_api():
         cursor.execute("""
             SELECT t.display_name, t.tradition, t.author, t.period, si.content
             FROM search_index si 
-            JOIN texts t ON si.rowid = t.rowid
+            JOIN texts t ON si.filename = t.filename
             WHERE LOWER(si.content) LIKE ?
             ORDER BY t.display_name
             LIMIT 100
