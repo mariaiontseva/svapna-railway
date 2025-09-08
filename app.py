@@ -414,7 +414,6 @@ def search_api():
             JOIN texts t ON si.filename = t.filename
             WHERE LOWER(si.content) LIKE ?
             ORDER BY t.display_name
-            LIMIT 100
         """, (f'%{search_term}%',))
         
         results = []
