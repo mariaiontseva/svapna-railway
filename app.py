@@ -235,7 +235,7 @@ def dashboard():
         <div class="search-box">
             <input type="text" class="search-input" id="searchInput" 
                    placeholder="Search any Sanskrit term (e.g., svapnasvapna, yoga, tantra)..." 
-                   value="svapna">
+                   value="svapnasvapna">
             
             <div class="quick-tags">
                 <button class="quick-tag" onclick="quickSearch('svapna')">svapna</button>
@@ -288,7 +288,7 @@ def dashboard():
             `;
 
             try {
-                const response = await fetch('/api/search', {
+                const response = await fetch('/search', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ search_term: searchTerm })
@@ -361,7 +361,7 @@ def dashboard():
 </html>
     """)
 
-@app.route('/api/search', methods=['POST'])
+@app.route('/search', methods=['POST'])
 def search_api():
     """Full-text search API endpoint"""
     start_time = time.time()
