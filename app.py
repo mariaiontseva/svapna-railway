@@ -475,6 +475,124 @@ def search_api():
         print(f"Search error: {e}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/extended_context', methods=['POST', 'OPTIONS'])
+def extended_context():
+    """Get extended context around a specific line number"""
+    if request.method == 'OPTIONS':
+        # Handle preflight request
+        response = jsonify({'status': 'ok'})
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
+        return response
+
+    try:
+        data = request.get_json()
+        display_name = data.get('display_name')
+        line_number = data.get('line_number')
+        context_lines = data.get('context_lines', 5)
+
+        if not display_name or not line_number:
+            return jsonify({'error': 'display_name and line_number required'}), 400
+
+        if DATABASE_PATH is None:
+            return jsonify({'error': 'Database not available'}), 503
+
+        # Connect to database
+        conn = sqlite3.connect(DATABASE_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        # Get full text content
+        cursor.execute("""
+            SELECT content FROM search_index si
+            JOIN texts t ON si.filename = t.filename
+            WHERE t.display_name = ?
+            LIMIT 1
+        """, (display_name,))
+
+        row = cursor.fetchone()
+        conn.close()
+
+        if not row or not row['content']:
+            return jsonify({'error': 'Text not found'}), 404
+
+        # Split into lines and extract context
+        lines = row['content'].split('\n')
+        target_line = line_number - 1  # Convert to 0-indexed
+
+        if target_line < 0 or target_line >= len(lines):
+            return jsonify({'error': f'Line {line_number} out of range (text has {len(lines)} lines)'}), 400
+
+        start = max(0, target_line - context_lines)
+        end = min(len(lines), target_line + context_lines + 1)
+
+        context_text = '\n'.join(lines[start:end])
+
+        return jsonify({
+            'extended_context': context_text,
+            'start_line': start + 1,
+            'end_line': end,
+            'total_lines': len(lines)
+        })
+
+    except Exception as e:
+        print(f"Extended context error: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/full_text', methods=['POST', 'OPTIONS'])
+def full_text():
+    """Get full text content"""
+    if request.method == 'OPTIONS':
+        # Handle preflight request
+        response = jsonify({'status': 'ok'})
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type')
+        response.headers.add('Access-Control-Allow-Methods', 'POST, OPTIONS')
+        return response
+
+    try:
+        data = request.get_json()
+        display_name = data.get('display_name')
+
+        if not display_name:
+            return jsonify({'error': 'display_name required'}), 400
+
+        if DATABASE_PATH is None:
+            return jsonify({'error': 'Database not available'}), 503
+
+        # Connect to database
+        conn = sqlite3.connect(DATABASE_PATH)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        # Get full text content
+        cursor.execute("""
+            SELECT t.display_name, t.author, t.tradition, si.content
+            FROM search_index si
+            JOIN texts t ON si.filename = t.filename
+            WHERE t.display_name = ?
+            LIMIT 1
+        """, (display_name,))
+
+        row = cursor.fetchone()
+        conn.close()
+
+        if not row:
+            return jsonify({'error': 'Text not found'}), 404
+
+        return jsonify({
+            'full_text': row['content'] or '',
+            'display_name': row['display_name'],
+            'author': row['author'],
+            'tradition': row['tradition'],
+            'lines': len((row['content'] or '').split('\n'))
+        })
+
+    except Exception as e:
+        print(f"Full text error: {e}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/health')
 def health():
     """Health check endpoint"""
