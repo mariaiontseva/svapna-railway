@@ -12,6 +12,7 @@ import os
 import time
 import urllib.request
 import sys
+import re
 
 app = Flask(__name__)
 CORS(app)
@@ -517,15 +518,26 @@ def extended_context():
         if not row or not row['content']:
             return jsonify({'error': 'Text not found'}), 404
 
-        # Split into lines and extract context
+        # Split into lines and find the target line by parsing (line X):
         lines = row['content'].split('\n')
-        target_line = line_number - 1  # Convert to 0-indexed
 
-        if target_line < 0 or target_line >= len(lines):
-            return jsonify({'error': f'Line {line_number} out of range (text has {len(lines)} lines)'}), 400
+        # Parse line numbers from content (they're embedded as "(line X):")
+        target_index = None
+        for i, line in enumerate(lines):
+            line_match = re.search(r'\(line (\d+)\s*\):', line)
+            if line_match and int(line_match.group(1)) == line_number:
+                target_index = i
+                break
 
-        start = max(0, target_line - context_lines)
-        end = min(len(lines), target_line + context_lines + 1)
+        if target_index is None:
+            # Fallback: treat line_number as array index if no line markers found
+            target_index = line_number - 1
+            if target_index < 0 or target_index >= len(lines):
+                return jsonify({'error': f'Line {line_number} not found in text'}), 404
+
+        # Extract context around the found line
+        start = max(0, target_index - context_lines)
+        end = min(len(lines), target_index + context_lines + 1)
 
         context_text = '\n'.join(lines[start:end])
 
@@ -533,7 +545,8 @@ def extended_context():
             'extended_context': context_text,
             'start_line': start + 1,
             'end_line': end,
-            'total_lines': len(lines)
+            'total_lines': len(lines),
+            'target_index': target_index
         })
 
     except Exception as e:
